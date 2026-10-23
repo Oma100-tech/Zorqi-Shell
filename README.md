@@ -7,7 +7,8 @@ An interactive terminal command app for Windows, macOS, Linux and SteamOS, indep
 Requires Python 3.10+. From the repository:
 
 ```sh
-cd Powershell30_Installer_GUI
+cd Zorqi
+cd Zorqi-Installer
 python3 setup.py --cli
 ```
 
@@ -101,7 +102,7 @@ Uninstall by removing the installed launcher, `share/zorqi` directory, platform 
 After installing PyInstaller on Windows, run from the repository root:
 
 ```text
-python Powershell30_Installer_GUI/build_windows.py
+python Zorqi-Installer/build_windows.py
 ```
 
 This builds `dist/Zorqi.exe` and `dist/Zorqi-Setup.exe`, checks that both files exist, and smoke-tests the terminal executable. The **Build Zorqi apps** GitHub Actions workflow uses the same script. Download the `Zorqi-Windows` workflow artifact after a successful run. These changes must be pushed before GitHub can build them.
