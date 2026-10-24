@@ -1,5 +1,6 @@
 # Zorqi Terminal
-Join our discord server! https://discord.gg/TgJpM3gf7
+Join our discord server! https://discord.gg/dFZkeU4qHQ
+
 An interactive terminal command app for Windows, macOS, Linux and SteamOS, independent of Microsoft PowerShell. It runs in your native terminal with interactive input, sudo authentication, editors, process monitors and command exit codes. It is not a separate terminal emulator or a PowerShell language implementation.
 
 ## Install the app
