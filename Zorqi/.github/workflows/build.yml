@@ -1,0 +1,85 @@
+name: Build Zorqi apps
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Detect source layout
+        id: layout
+        shell: bash
+        run: |
+          if [ -d "Zorqi_Installer" ]; then
+            app_dir="."
+          elif [ -d "Zorqi/Zorqi-Installer" ]; then
+            app_dir="Zorqi"
+          else
+            echo "Could not locate the Zorqi installer source."
+            exit 1
+          fi
+          echo "app_dir=$app_dir" >> "$GITHUB_OUTPUT"
+          if [ -d "$app_dir/tests" ]; then
+            echo "has_tests=true" >> "$GITHUB_OUTPUT"
+          fi
+      - run: python -m pip install pyinstaller
+      - if: steps.layout.outputs.has_tests == 'true'
+        working-directory: ${{ steps.layout.outputs.app_dir }}
+        run: python -m unittest discover -s tests -v
+      - if: runner.os != 'Windows'
+        working-directory: ${{ steps.layout.outputs.app_dir }}
+        run: python -m PyInstaller --clean --onefile --name Zorqi Zorqi_Installer/zorqi.py
+      - if: runner.os == 'Linux'
+        working-directory: ${{ steps.layout.outputs.app_dir }}
+        run: |
+          python -m PyInstaller --clean --onefile --name Zorqi-Setup-Linux \
+            --add-binary "dist/Zorqi:." Zorqi_Installer/linux_setup.py
+          chmod +x dist/Zorqi-Setup-Linux
+      - if: runner.os == 'macOS'
+        working-directory: ${{ steps.layout.outputs.app_dir }}
+        run: python Zorqi_Installer/macos_package.py --binary dist/Zorqi --output dist/Zorqi-macOS.dmg
+      - if: runner.os == 'Windows'
+        working-directory: ${{ steps.layout.outputs.app_dir }}
+        run: python Zorqi_Installer/build_windows.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Zorqi-${{ runner.os }}
+          path: ${{ steps.layout.outputs.app_dir }}/dist/*
+  publish-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Zorqi-Windows
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: Zorqi-Linux
+          path: release-linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: Zorqi-macOS
+          path: release-macos
+      - name: Publish setup assets to GitHub Releases
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$env:GITHUB_REF_NAME" "release/Zorqi-Setup.exe" "release-linux/Zorqi-Setup-Linux" "release-macos/Zorqi-macOS.dmg" `
+            --repo "$env:GITHUB_REPOSITORY" `
+            --title "Zorqi $env:GITHUB_REF_NAME" `
+            --generate-notes

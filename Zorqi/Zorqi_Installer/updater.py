@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-REPOSITORY = 'https://github.com/Oma100-tech/PowerShell30.git'
+REPOSITORY = 'https://github.com/Oma100-tech/Zorqi-Shell.git'
 STATE = Path(os.environ.get('LOCALAPPDATA', Path.home() / '.local' / 'share')) / 'zorqi-updates'
 
 
@@ -43,7 +43,7 @@ def handle(name, args):
             print('Already up to date.' if installed == remote else f'GitHub revision: {remote}. Run update to install.')
             return 0
         STATE.mkdir(parents=True, exist_ok=True)
-        checkout = STATE / 'checkout'
+        checkout = STATE / 'checkout-zorqi-shell'
         if not checkout.exists():
             git('clone', '--depth', '1', REPOSITORY, str(checkout))
         else:
@@ -52,7 +52,7 @@ def handle(name, args):
             if git('status', '--porcelain', cwd=checkout):
                 raise RuntimeError('Update checkout has local changes; refusing to overwrite them.')
             git('pull', '--ff-only', cwd=checkout)
-        installer = checkout / 'Powershell30_Installer_GUI' / 'linux_install.py'
+        installer = checkout / 'Zorqi' / 'Zorqi-Installer' / 'linux_install.py'
         if not installer.is_file():
             raise RuntimeError('GitHub does not contain the new installer yet. Publish these changes first.')
         metadata = Path(__file__).with_name('installation.json')
